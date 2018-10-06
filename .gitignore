@@ -64,3 +64,6 @@ typings/
 
 # output of webpack
 dist/
+
+config/dev.env.js
+config/prod.env.js
