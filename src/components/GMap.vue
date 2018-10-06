@@ -1,10 +1,10 @@
 <template>
   <GmapMap
-    re="mapRef"
+    ref="map"
     :center="center"
     :zoom="16"
     map-type-id="terrain"
-    style="width: 100%; height: 600px"
+    style="width: 100%; height: 900px"
     @bounds_changed="fetchShelters()"
   >
   <GmapMarker
@@ -49,21 +49,24 @@ export default {
   mounted () {
     this.$getLocation().then(coordinates => {
       this.center = coordinates
-      console.log(coordinates)
     })
   },
   methods: {
-    async fetchShelters () {
-      let conf = {}
-      axios.get(`${SHELTERS_ENDPOINT}/by_id/10/20`, conf).then((response) => {
-        response.data.forEach((row) => {
-          this.markers[row.ID] = { name: row.Name, lat: row.Latitude, lng: row.Longitude, state: row.State }
-          console.log('row', this.markers[row.ID])
+    async fetchShelters () { // 表示区画内の避難所一覧を取得
+      this.$refs.map.$mapPromise.then((map) => {
+        // 表示領域からエンドポイントを取得
+        const bounds = map.getBounds()
+        const endpointURL = `${SHELTERS_ENDPOINT}/by_rect/${bounds.f.b}/${bounds.b.b}/${bounds.f.f}/${bounds.b.f}`
+        // エンドポイントを指定して避難所リストを取得
+        axios.get(endpointURL).then((response) => {
+          this.markers = {}
+          response.data.forEach((row) => {
+            this.markers[row.ID] = { name: row.Name, lat: row.Latitude, lng: row.Longitude, state: row.State }
+          })
         })
       })
     },
     showShelterInfo (name, state, pos) {
-      console.log(`${name} ${state} ${pos}`)
       this.infoWindow.position = pos
       this.infoWindow.open = true
       this.infoWindow.content = name
